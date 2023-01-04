@@ -2,6 +2,13 @@ package handlers
 
 import (
 	"bytes"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"strconv"
+
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
 	"github.com/suquant/wgrest/models"
@@ -9,16 +16,14 @@ import (
 	"github.com/suquant/wgrest/utils"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"io"
-	"net/http"
-	"net/url"
-	"os"
-	"strconv"
 )
+
+var a = 6
 
 // CreateDevice - Create new device
 // @todo: need to be implemented
 func (c *WireGuardContainer) CreateDevice(ctx echo.Context) error {
+	fmt.Printf("%d", a)
 	var request models.DeviceCreateOrUpdateRequest
 	if err := ctx.Bind(&request); err != nil {
 		return err

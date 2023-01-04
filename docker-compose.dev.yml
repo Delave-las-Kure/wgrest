@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  wgrest-dev:
+    container_name: wgrest-dev
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: RU
+      PEERS: 1 #optional
+      SERVERPORT: 51820 #optional
+      PEERDNS: auto #optional
+    volumes:
+      - .:/home/wgrest
+      - ./tmp/config:/config
+      - ./tmp/wgrest:/etc/wgrest
+    ports:
+      - 8000:8000
+      - 51820:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1

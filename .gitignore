@@ -16,3 +16,6 @@ clients/
 .DS_Store
 .vscode
 .idea
+
+vendor
+tmp

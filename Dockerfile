@@ -1,4 +1,4 @@
-FROM golang:1.17.3-alpine3.14 as build-env
+FROM golang:1.19.4-alpine3.17 as build-env
 LABEL maintainer="ForestVPN.com <support@forestvpn.com>"
 
 RUN apk add --no-cache git gcc

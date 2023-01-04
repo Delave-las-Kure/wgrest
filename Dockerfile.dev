@@ -1,0 +1,21 @@
+FROM linuxserver/wireguard:latest
+
+#install golang & air
+RUN curl -OL https://golang.org/dl/go1.19.4.linux-amd64.tar.gz && tar -C /usr/local -xvf go1.19.4.linux-amd64.tar.gz
+ENV PATH=$PATH:/usr/local/go/bin
+
+#install wireguard
+RUN apt-get update && apt-get install -y curl wireguard systemd screen nftables
+RUN curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s
+
+RUN systemctl enable nftables.service
+RUN curl -L https://github.com/suquant/wgrest/releases/latest/download/wgrest_amd64.deb -o wgrest_amd64.deb
+RUN dpkg -i wgrest_amd64.deb
+
+WORKDIR /home/wgrest
+
+COPY ./run-dev.sh ./run-dev.sh
+
+RUN chmod +x ./run-dev.sh
+
+ENTRYPOINT exec ./run-dev.sh
