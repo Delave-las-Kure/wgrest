@@ -4,10 +4,15 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
+
+	"github.com/samber/lo"
 
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
@@ -104,7 +109,6 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 	}
 	defer client.Close()
 
-	_, err = client.Device(name)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -126,6 +130,61 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 		})
 	}
 
+	device, err := client.Device(name)
+
+	if request.AllowedIps == nil && device.Peers != nil {
+
+		peerIps := lo.Map(lo.Filter(device.Peers, func(item wgtypes.Peer, i int) bool {
+			if item.AllowedIPs == nil {
+				return false
+			}
+
+			_, hasIp4 := lo.Find(item.AllowedIPs, func(ip net.IPNet) bool {
+				return ip.IP.To4() != nil
+			})
+
+			return hasIp4
+		}), func(item wgtypes.Peer, i int) net.IPNet {
+			iIp, _ := lo.Find(item.AllowedIPs, func(ip net.IPNet) bool {
+				return ip.IP.To4() != nil
+			})
+
+			return iIp
+		})
+
+		sort.SliceStable(peerIps, func(i, j int) bool {
+			iIp := peerIps[i]
+			jIp := peerIps[j]
+
+			for ind := range iIp.IP {
+				if iIp.IP[ind] > jIp.IP[ind] {
+					return true
+				} else if iIp.IP[ind] < jIp.IP[ind] {
+					return false
+				}
+			}
+
+			return false
+		})
+
+		latestIpStr := peerIps[0].IP.String()
+
+		addr, addrErr := netip.ParseAddr(latestIpStr)
+
+		b := addr.String()
+
+		fmt.Println(b)
+
+		if addrErr == nil && addr.Next().IsValid() {
+			nextAddr := addr.Next()
+			ipArr := nextAddr.As4()
+			ip := net.IPv4(ipArr[0], ipArr[1], ipArr[2], ipArr[3])
+
+			peerConf.AllowedIPs = []net.IPNet{{IP: ip.To4(), Mask: net.IPv4Mask(255, 255, 255, 255)}}
+		}
+
+	}
+
 	deviceConf := wgtypes.Config{
 		Peers: []wgtypes.PeerConfig{
 			peerConf,
@@ -140,7 +199,8 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 		})
 	}
 
-	device, err := client.Device(name)
+	device, err = client.Device(name)
+
 	if err != nil {
 		if os.IsNotExist(err) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -216,7 +276,7 @@ func (c *WireGuardContainer) DeleteDevicePeer(ctx echo.Context) error {
 
 	deviceConf := wgtypes.Config{
 		Peers: []wgtypes.PeerConfig{
-			wgtypes.PeerConfig{
+			{
 				PublicKey: pubKey,
 				Remove:    true,
 			},

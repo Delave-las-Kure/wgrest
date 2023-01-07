@@ -3,6 +3,12 @@ FROM linuxserver/wireguard:latest
 #install golang & air
 RUN curl -OL https://golang.org/dl/go1.19.4.linux-amd64.tar.gz && tar -C /usr/local -xvf go1.19.4.linux-amd64.tar.gz
 ENV PATH=$PATH:/usr/local/go/bin
+# where install libs
+ENV GOPATH=/usr/local/go
+
+#debug lib
+RUN go install github.com/go-delve/delve/cmd/dlv@v1.20.1
+
 
 #install wireguard
 RUN apt-get update && apt-get install -y curl wireguard systemd screen nftables

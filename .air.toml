@@ -7,9 +7,9 @@ tmp_dir = "tmp"
 
 [build]
 # Just plain old shell command. You could use `make` as well.
-cmd = "go build -o ./tmp/main ./cmd/wgrest-server/main.go && chmod +x ./tmp/main"
+cmd = "go build -gcflags \"all=-N -l\" -o ./tmp/main ./cmd/wgrest-server/main.go && chmod +x ./tmp/main"
 # Binary file yields from `cmd`.
-bin = "tmp/main --static-auth-token test --listen 0.0.0.0:8000"
+full_bin = "dlv exec --continue --listen=:4000 --headless --log --api-version=2 --accept-multiclient  ./tmp/main -- --static-auth-token test --listen 0.0.0.0:8000"
 # Customize binary, can setup environment variables when run your app.
 #full_bin = "APP_ENV=dev APP_USER=air ./tmp/main"
 # Watch these filename extensions.

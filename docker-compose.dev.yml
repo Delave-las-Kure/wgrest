@@ -21,6 +21,7 @@ services:
       - ./tmp/config:/config
       - ./tmp/wgrest:/etc/wgrest
     ports:
+      - 4000:4000
       - 8000:8000
       - 51820:51820/udp
     sysctls:
