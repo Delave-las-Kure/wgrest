@@ -172,10 +172,6 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 
 		addr, addrErr := netip.ParseAddr(latestIpStr)
 
-		b := addr.String()
-
-		fmt.Println(b)
-
 		if addrErr == nil && addr.Next().IsValid() {
 			nextAddr := addr.Next()
 			ipArr := nextAddr.As4()
