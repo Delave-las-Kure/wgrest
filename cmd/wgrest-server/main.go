@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/Delave-las-Kure/wgrest/handlers"
+	"github.com/Delave-las-Kure/wgrest/storage"
+	"github.com/Delave-las-Kure/wgrest/utils"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/suquant/wgrest/handlers"
-	"github.com/suquant/wgrest/storage"
-	"github.com/suquant/wgrest/utils"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"golang.org/x/crypto/acme/autocert"

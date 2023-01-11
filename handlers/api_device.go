@@ -13,12 +13,13 @@ import (
 	"strconv"
 
 	"github.com/samber/lo"
+	"github.com/vishvananda/netlink"
 
+	"github.com/Delave-las-Kure/wgrest/models"
+	"github.com/Delave-las-Kure/wgrest/storage"
+	"github.com/Delave-las-Kure/wgrest/utils"
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
-	"github.com/suquant/wgrest/models"
-	"github.com/suquant/wgrest/storage"
-	"github.com/suquant/wgrest/utils"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -221,6 +222,17 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 		}
 	}
 
+	link, err := netlink.LinkByName(device.Name)
+	if err == nil {
+		for _, ip := range peer.AllowedIPs {
+			netlink.RouteAdd(&netlink.Route{
+				Dst:       &ip,
+				LinkIndex: link.Attrs().Index,
+				Scope:     netlink.SCOPE_LINK,
+			})
+		}
+	}
+
 	return ctx.JSON(http.StatusCreated, models.NewPeer(peer))
 }
 
@@ -261,7 +273,7 @@ func (c *WireGuardContainer) DeleteDevicePeer(ctx echo.Context) error {
 	}
 	defer client.Close()
 
-	_, err = client.Device(name)
+	device, err := client.Device(name)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return ctx.NoContent(http.StatusNotFound)
@@ -289,6 +301,25 @@ func (c *WireGuardContainer) DeleteDevicePeer(ctx echo.Context) error {
 			Code:    "wireguard_error",
 			Message: err.Error(),
 		})
+	}
+
+	var peer wgtypes.Peer
+	for _, v := range device.Peers {
+		if v.PublicKey == pubKey {
+			peer = v
+			break
+		}
+	}
+
+	link, err := netlink.LinkByName(device.Name)
+	if err == nil {
+		for _, ip := range peer.AllowedIPs {
+			netlink.RouteDel(&netlink.Route{
+				Dst:       &ip,
+				LinkIndex: link.Attrs().Index,
+				Scope:     netlink.SCOPE_LINK,
+			})
+		}
 	}
 
 	return ctx.NoContent(http.StatusNoContent)

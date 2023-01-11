@@ -3,9 +3,9 @@ package handlers
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/Delave-las-Kure/wgrest/models"
+	"github.com/Delave-las-Kure/wgrest/utils"
 	"github.com/labstack/echo/v4"
-	"github.com/suquant/wgrest/models"
-	"github.com/suquant/wgrest/utils"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"net/http"
 	"strconv"

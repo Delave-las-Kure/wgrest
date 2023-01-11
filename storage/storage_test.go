@@ -1,7 +1,7 @@
 package storage_test
 
 import (
-	"github.com/suquant/wgrest/storage"
+	"github.com/Delave-las-Kure/wgrest/storage"
 	"io/ioutil"
 	"os"
 	"testing"

@@ -1,4 +1,4 @@
-module github.com/suquant/wgrest
+module github.com/Delave-las-Kure/wgrest
 
 go 1.19
 
@@ -7,12 +7,15 @@ require (
 	github.com/labstack/echo/v4 v4.10.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/urfave/cli/v2 v2.23.7
+	github.com/vishvananda/netlink v1.1.0
 	golang.org/x/crypto v0.4.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20221104135756-97bc4ad4a1cb
 )
 
 require (
 	github.com/kr/pretty v0.2.1 // indirect
+	github.com/mdlayher/netlink v1.7.1 // indirect
+	github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df // indirect
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )
@@ -27,7 +30,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mdlayher/genetlink v1.3.1 // indirect
-	github.com/mdlayher/netlink v1.7.1 // indirect
 	github.com/mdlayher/socket v0.4.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/samber/lo v1.37.0

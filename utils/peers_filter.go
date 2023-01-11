@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/suquant/wgrest/models"
+	"github.com/Delave-las-Kure/wgrest/models"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"strings"
 )
