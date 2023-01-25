@@ -2,6 +2,8 @@ package models
 
 // PeerCreateOrUpdateRequest - Peer params that might be used due to creation or updation process
 type PeerCreateOrUpdateRequest struct {
+	// User id
+	UserID *uint `json:"userId,omitempty"`
 
 	// Base64 encoded private key. If present it will be stored in persistent storage.
 	PrivateKey *string `json:"private_key,omitempty"`
@@ -20,4 +22,6 @@ type PeerCreateOrUpdateRequest struct {
 
 	// Peer's endpoint in host:port format
 	Endpoint string `json:"endpoint,omitempty"`
+
+	Disabled *bool `json:"disabled,omitempty"`
 }

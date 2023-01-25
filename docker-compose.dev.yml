@@ -19,7 +19,7 @@ services:
     volumes:
       - .:/home/wgrest
       - ./tmp/config:/config
-      - ./tmp/wgrest:/etc/wgrest
+      - ./tmp/wgrest:/var/lib/wgrest
     ports:
       - 4000:4000
       - 8000:8000

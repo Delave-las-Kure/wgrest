@@ -1,7 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"path"
+
+	"github.com/Delave-las-Kure/wgrest/db/migration"
 	"github.com/Delave-las-Kure/wgrest/handlers"
 	"github.com/Delave-las-Kure/wgrest/storage"
 	"github.com/Delave-las-Kure/wgrest/utils"
@@ -10,10 +17,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"golang.org/x/crypto/acme/autocert"
-	"log"
-	"net/http"
-	"os"
-	"path"
 )
 
 var (
@@ -21,6 +24,10 @@ var (
 )
 
 func main() {
+	ctx := context.Background()
+
+	migration.Run(ctx)
+
 	flags := []cli.Flag{
 		&cli.StringFlag{
 			Name:    "conf",
@@ -202,6 +209,27 @@ func main() {
 
 			// UpdateDeviceOptions - Update device's options
 			v1.PATCH("/devices/:name/options/", wc.UpdateDeviceOptions)
+
+			// DisableDevicePeer - Disable peer
+			v1.PATCH("/devices/:name/peers/:urlSafePubKey/disable/", wc.DisableDevicePeer)
+
+			// EnableDevicePeer - Enable peer
+			v1.PATCH("/devices/:name/peers/:urlSafePubKey/enable/", wc.EnableDevicePeer)
+
+			// CreateUser - Create user
+			v1.POST("/users/", wc.CreateUser)
+
+			// FindUsers - Find users
+			v1.GET("/users/", wc.FindUsers)
+
+			// FindUser - Get user
+			v1.GET("/users/:id/", wc.FindUser)
+
+			// UpdateUser - Update user
+			v1.PATCH("/users/:id/", wc.UpdateUser)
+
+			// UpdateUser - Update user
+			v1.DELETE("/users/:id/", wc.DeleteUser)
 
 			listen := c.String("listen")
 			// Start server

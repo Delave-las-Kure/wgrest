@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"github.com/Delave-las-Kure/wgrest/db/model"
 )
 
 // Peer - Information about wireguard peer.
@@ -33,4 +35,6 @@ type Peer struct {
 
 	// Peer's transmit bytes
 	TransmitBytes int64 `json:"transmit_bytes"`
+
+	User *model.User `json:"user,omitempty"`
 }

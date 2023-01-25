@@ -2,20 +2,22 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"net/netip"
 	"net/url"
 	"os"
-	"sort"
 	"strconv"
 
-	"github.com/samber/lo"
 	"github.com/vishvananda/netlink"
 
+	"github.com/Delave-las-Kure/wgrest/db/connection"
+	"github.com/Delave-las-Kure/wgrest/db/model"
+	"github.com/Delave-las-Kure/wgrest/db/service"
 	"github.com/Delave-las-Kure/wgrest/models"
+	"github.com/Delave-las-Kure/wgrest/shared"
 	"github.com/Delave-las-Kure/wgrest/storage"
 	"github.com/Delave-las-Kure/wgrest/utils"
 	"github.com/labstack/echo/v4"
@@ -40,9 +42,18 @@ func (c *WireGuardContainer) CreateDevice(ctx echo.Context) error {
 
 // CreateDevicePeer - Create new device peer
 func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
+	ctxp := context.Background()
 	var request models.PeerCreateOrUpdateRequest
 	if err := ctx.Bind(&request); err != nil {
 		return err
+	}
+
+	if request.UserID == nil {
+		ctx.Logger().Errorf("userId is required parameter")
+		return ctx.JSON(http.StatusInternalServerError, models.Error{
+			Code:    "wireguard_config_error",
+			Message: "userId is required parameter",
+		})
 	}
 
 	var privateKey *wgtypes.Key
@@ -135,51 +146,39 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 
 	if request.AllowedIps == nil && device.Peers != nil {
 
-		peerIps := lo.Map(lo.Filter(device.Peers, func(item wgtypes.Peer, i int) bool {
-			if item.AllowedIPs == nil {
-				return false
-			}
+		addr, addrErr := GetNextPeerIp(device.Peers)
 
-			_, hasIp4 := lo.Find(item.AllowedIPs, func(ip net.IPNet) bool {
-				return ip.IP.To4() != nil
+		if addrErr != nil {
+			ctx.Logger().Errorf("failed to generate next ip: %s", err)
+			return ctx.JSON(http.StatusBadRequest, models.Error{
+				Code:    "wireguard_config_error",
+				Message: err.Error(),
 			})
-
-			return hasIp4
-		}), func(item wgtypes.Peer, i int) net.IPNet {
-			iIp, _ := lo.Find(item.AllowedIPs, func(ip net.IPNet) bool {
-				return ip.IP.To4() != nil
-			})
-
-			return iIp
-		})
-
-		sort.SliceStable(peerIps, func(i, j int) bool {
-			iIp := peerIps[i]
-			jIp := peerIps[j]
-
-			for ind := range iIp.IP {
-				if iIp.IP[ind] > jIp.IP[ind] {
-					return true
-				} else if iIp.IP[ind] < jIp.IP[ind] {
-					return false
-				}
-			}
-
-			return false
-		})
-
-		latestIpStr := peerIps[0].IP.String()
-
-		addr, addrErr := netip.ParseAddr(latestIpStr)
-
-		if addrErr == nil && addr.Next().IsValid() {
-			nextAddr := addr.Next()
-			ipArr := nextAddr.As4()
-			ip := net.IPv4(ipArr[0], ipArr[1], ipArr[2], ipArr[3])
-
-			peerConf.AllowedIPs = []net.IPNet{{IP: ip.To4(), Mask: net.IPv4Mask(255, 255, 255, 255)}}
 		}
 
+		peerConf.AllowedIPs = []net.IPNet{addr}
+
+	}
+
+	//update db
+	db, _ := connection.Open()
+
+	dbPeer := model.Peer{
+		UserID:     *request.UserID,
+		PrivateKey: privateKey.String(),
+		Device:     name,
+	}
+
+	dbPeer.FromWgPeerConfig(&peerConf)
+
+	_, err = service.UpsertPeer(&dbPeer, ctxp, db)
+
+	if err != nil {
+		ctx.Logger().Errorf("db error: %s", err)
+		return ctx.JSON(http.StatusBadRequest, models.Error{
+			Code:    "db_error",
+			Message: err.Error(),
+		})
 	}
 
 	deviceConf := wgtypes.Config{
@@ -241,6 +240,8 @@ func (c *WireGuardContainer) DeleteDevice(ctx echo.Context) error {
 // DeleteDevicePeer - Delete device's peer
 func (c *WireGuardContainer) DeleteDevicePeer(ctx echo.Context) error {
 	name := ctx.Param("name")
+	ctxp := context.Background()
+
 	urlSafePubKey, err := url.QueryUnescape(ctx.Param("urlSafePubKey"))
 	if err != nil {
 		ctx.Logger().Errorf("failed to parse pub key: %s", err)
@@ -282,6 +283,18 @@ func (c *WireGuardContainer) DeleteDevicePeer(ctx echo.Context) error {
 		})
 	}
 
+	// update db
+	db, _ := connection.Open()
+	err = service.DeletePeer(service.FindPeerOpts{PublicKey: pubKey.String()}, ctxp, db)
+
+	if err != nil {
+		ctx.Logger().Errorf("failed to delete db record: %s", err)
+		return ctx.JSON(http.StatusInternalServerError, models.Error{
+			Code:    "db_error",
+			Message: err.Error(),
+		})
+	}
+
 	deviceConf := wgtypes.Config{
 		Peers: []wgtypes.PeerConfig{
 			{
@@ -315,6 +328,12 @@ func (c *WireGuardContainer) DeleteDevicePeer(ctx echo.Context) error {
 				LinkIndex: link.Attrs().Index,
 				Scope:     netlink.SCOPE_LINK,
 			})
+		}
+	}
+
+	if peer.AllowedIPs != nil {
+		for _, ip := range peer.AllowedIPs {
+			shared.RemoveIpFromBlackList(name, ip)
 		}
 	}
 
@@ -363,6 +382,7 @@ func (c *WireGuardContainer) GetDevice(ctx echo.Context) error {
 // GetDevicePeer - Get device peer info
 func (c *WireGuardContainer) GetDevicePeer(ctx echo.Context) error {
 	name := ctx.Param("name")
+
 	urlSafePubKey, err := url.QueryUnescape(ctx.Param("urlSafePubKey"))
 	if err != nil {
 		ctx.Logger().Errorf("failed to parse pub key: %s", err)
@@ -415,7 +435,9 @@ func (c *WireGuardContainer) GetDevicePeer(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusNotFound)
 	}
 
-	return ctx.JSON(http.StatusOK, models.NewPeer(*peer))
+	serPeer := models.NewPeer(*peer)
+
+	return ctx.JSON(http.StatusOK, serPeer)
 }
 
 // ListDevicePeers - Peers list
@@ -618,7 +640,9 @@ func (c *WireGuardContainer) UpdateDevice(ctx echo.Context) error {
 
 // UpdateDevicePeer - Update device's peer
 func (c *WireGuardContainer) UpdateDevicePeer(ctx echo.Context) error {
+	ctxb := context.Background()
 	name := ctx.Param("name")
+
 	urlSafePubKey, err := url.QueryUnescape(ctx.Param("urlSafePubKey"))
 	if err != nil {
 		ctx.Logger().Errorf("failed to parse pub key: %s", err)
@@ -682,6 +706,33 @@ func (c *WireGuardContainer) UpdateDevicePeer(ctx echo.Context) error {
 		Peers: []wgtypes.PeerConfig{
 			peerConf,
 		},
+	}
+
+	// update db
+	db, err := connection.Open()
+	if err != nil {
+		ctx.Logger().Errorf("failed to open db: %s", err)
+		return ctx.JSON(http.StatusInternalServerError, models.Error{
+			Code:    "db_error",
+			Message: "failed to open db",
+		})
+	}
+
+	dbPeer := &model.Peer{}
+	fields := dbPeer.FromWgPeerConfig(&peerConf)
+
+	if request.UserID != nil {
+		dbPeer.UserID = *request.UserID
+	}
+
+	dbPeer, err = service.UpdatePeer(service.FindPeerOpts{PublicKey: pubKey.String(), Select: fields}, dbPeer, ctxb, db)
+
+	if err != nil {
+		ctx.Logger().Errorf("failed to update record db: %s", err)
+		return ctx.JSON(http.StatusInternalServerError, models.Error{
+			Code:    "db_error",
+			Message: "failed to update",
+		})
 	}
 
 	if err := client.ConfigureDevice(name, conf); err != nil {
@@ -913,4 +964,70 @@ func (c *WireGuardContainer) UpdateDeviceOptions(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, models.NewDeviceOptions(*options))
+}
+
+func (c *WireGuardContainer) DisableDevicePeer(ctx echo.Context) error {
+	ctxb := context.Background()
+	name := ctx.Param("name")
+
+	db, _ := connection.Open()
+
+	pubKey, err := getPubKey(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Error{
+			Code:    "request_params_error",
+			Message: err.Error(),
+		})
+	}
+
+	peer, err := service.FindPeer(service.FindPeerOpts{PublicKey: pubKey.String(), JoinAllowedIps: true}, ctxb, db)
+	peer.Disabled = true
+
+	_, err = service.UpdatePeer(service.FindPeerOpts{PublicKey: pubKey.String()}, peer, ctxb, db)
+
+	for _, ip := range peer.AllowedIps {
+		err := shared.AddIpToBlacklist(name, ip.ToIPNet())
+		if err != nil {
+			ctx.Logger().Errorf("failed to disable peer: %s", err)
+			/*return ctx.JSON(http.StatusBadRequest, models.Error{
+				Code:    "disabled_failed",
+				Message: "disable failed",
+			})*/
+		}
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
+}
+
+func (c *WireGuardContainer) EnableDevicePeer(ctx echo.Context) error {
+	ctxb := context.Background()
+	name := ctx.Param("name")
+
+	db, _ := connection.Open()
+
+	pubKey, err := getPubKey(ctx)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Error{
+			Code:    "request_params_error",
+			Message: err.Error(),
+		})
+	}
+
+	peer, err := service.FindPeer(service.FindPeerOpts{PublicKey: pubKey.String(), JoinAllowedIps: true}, ctxb, db)
+	peer.Disabled = false
+
+	_, err = service.UpdatePeer(service.FindPeerOpts{PublicKey: pubKey.String(), Select: []string{"Disabled"}}, peer, ctxb, db)
+
+	for _, ip := range peer.AllowedIps {
+		shared.RemoveIpFromBlackList(name, ip.ToIPNet())
+		if err != nil {
+			ctx.Logger().Errorf("failed to enable peer: %s", err)
+			/*return ctx.JSON(http.StatusBadRequest, models.Error{
+				Code:    "enable_failed",
+				Message: "enable failed",
+			})*/
+		}
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }
