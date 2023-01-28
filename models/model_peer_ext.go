@@ -16,10 +16,7 @@ var (
 	EmptyKey = wgtypes.Key{}
 )
 
-func NewPeer(peer wgtypes.Peer) Peer {
-	ctx := context.Background()
-	db, _ := connection.Open()
-	peerDb, err := service.FindPeer(service.FindPeerOpts{PublicKey: peer.PublicKey.String(), JoinUser: true}, ctx, db)
+func NewPeer(peer wgtypes.Peer, join bool) Peer {
 
 	allowedIPs := make([]string, len(peer.AllowedIPs))
 	for i, v := range peer.AllowedIPs {
@@ -36,8 +33,13 @@ func NewPeer(peer wgtypes.Peer) Peer {
 		PersistentKeepaliveInterval: peer.PersistentKeepaliveInterval.String(),
 	}
 
-	if err == nil {
-		p.User = peerDb.User
+	if p.User == nil && join {
+		ctx := context.Background()
+		db, _ := connection.Open()
+		peerDb, err := service.FindPeer(service.FindPeerOpts{PublicKey: peer.PublicKey.String(), JoinUser: true}, ctx, db)
+		if err == nil {
+			p.User, err = NewUser(peerDb.User, false)
+		}
 	}
 
 	if peer.PresharedKey != EmptyKey {

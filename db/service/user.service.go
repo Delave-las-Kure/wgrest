@@ -28,11 +28,6 @@ type FindUserOpts struct {
 	paginatesc.PaginateModel
 }
 
-type FindUsersResult struct {
-	Users []model.User `json:"users,omitempty"`
-	Count int64        `json:"count,omitempty"`
-}
-
 func UpsertUser(user *model.User, ctx context.Context, client *gorm.DB) error {
 	result := client.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},
@@ -94,35 +89,6 @@ func DeleteUser(opts FindUserOpts, ctx context.Context, client *gorm.DB) error {
 	return result.Error
 }
 
-func findUserBuilder(opts FindUserOpts, ctx context.Context, req *gorm.DB) *gorm.DB {
-
-	if opts.ID != nil {
-		req = req.Where("users.id = ?", *opts.ID)
-	}
-
-	if opts.Name != nil {
-		req = req.Where("users.name = ?", *opts.Name)
-	}
-
-	if opts.FID != nil {
-		req = req.Where("users.f_id = ?", *opts.FID)
-	}
-
-	if opts.Q != "" {
-		req = req.Where("users.name LIKE ? OR users.f_id LIKE ?", "%"+opts.Q+"%", "%"+opts.Q+"%")
-	}
-
-	if opts.JoinPeers == true {
-		req = req.Preload("Peers.AllowedIps")
-	}
-
-	if opts.Select != nil {
-		req = req.Select(opts.Select)
-	}
-
-	return req
-}
-
 func GenFindUserOpts(ctx echo.Context) (*FindUserOpts, error) {
 	opts := FindUserOpts{}
 
@@ -182,4 +148,37 @@ func GenFindUserOpts(ctx echo.Context) (*FindUserOpts, error) {
 	}
 
 	return &opts, nil
+}
+
+func NewUser() {
+
+}
+
+func findUserBuilder(opts FindUserOpts, ctx context.Context, req *gorm.DB) *gorm.DB {
+
+	if opts.ID != nil {
+		req = req.Where("users.id = ?", *opts.ID)
+	}
+
+	if opts.Name != nil {
+		req = req.Where("users.name = ?", *opts.Name)
+	}
+
+	if opts.FID != nil {
+		req = req.Where("users.f_id = ?", *opts.FID)
+	}
+
+	if opts.Q != "" {
+		req = req.Where("users.name LIKE ? OR users.f_id LIKE ?", "%"+opts.Q+"%", "%"+opts.Q+"%")
+	}
+
+	if opts.JoinPeers == true {
+		req = req.Preload("Peers.AllowedIps")
+	}
+
+	if opts.Select != nil {
+		req = req.Select(opts.Select)
+	}
+
+	return req
 }

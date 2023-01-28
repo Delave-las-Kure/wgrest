@@ -42,7 +42,17 @@ func (c *WireGuardContainer) CreateUser(ctx echo.Context) error {
 		})
 	}
 
-	return ctx.JSON(http.StatusCreated, user)
+	normalUser, err := models.NewUser(&user, true)
+
+	if err != nil {
+		ctx.Logger().Errorf("failed to get wireguard peer: %s", err)
+		return ctx.JSON(http.StatusInternalServerError, models.Error{
+			Code:    "wireguard_error",
+			Message: err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusCreated, normalUser)
 }
 
 func (c *WireGuardContainer) FindUser(ctx echo.Context) error {
@@ -65,13 +75,25 @@ func (c *WireGuardContainer) FindUser(ctx echo.Context) error {
 	user, err := service.FindUser(*opts, ctxp, db)
 
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, models.Error{
+		ctx.Logger().Errorf("failed to get user: %s", err)
+		return ctx.JSON(http.StatusInternalServerError, models.Error{
 			Code:    "db_error",
 			Message: err.Error(),
 		})
 	}
 
-	return ctx.JSON(http.StatusOK, user)
+	/////////
+	normalUser, err := models.NewUser(user, true)
+
+	if err != nil {
+		ctx.Logger().Errorf("failed to get wireguard peer: %s", err)
+		return ctx.JSON(http.StatusInternalServerError, models.Error{
+			Code:    "wireguard_error",
+			Message: err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, normalUser)
 }
 
 func (c *WireGuardContainer) FindUsers(ctx echo.Context) error {
@@ -99,7 +121,16 @@ func (c *WireGuardContainer) FindUsers(ctx echo.Context) error {
 		return err
 	}
 
-	return ctx.JSON(http.StatusOK, service.FindUsersResult{Users: *users, Count: count})
+	normalUsers := []models.User{}
+
+	for _, user := range *users {
+		normalUser, err := models.NewUser(&user, true)
+		if err == nil {
+			normalUsers = append(normalUsers, *normalUser)
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, models.FindUsersResult{Users: normalUsers, Count: count})
 }
 
 func (c *WireGuardContainer) UpdateUser(ctx echo.Context) error {
@@ -137,9 +168,20 @@ func (c *WireGuardContainer) UpdateUser(ctx echo.Context) error {
 	}
 
 	opts.Select = nil
+	opts.JoinPeers = true
 	newUser, err := service.FindUser(*opts, ctxp, db)
 
-	return ctx.JSON(http.StatusOK, newUser)
+	normalUser, err := models.NewUser(newUser, true)
+
+	if err != nil {
+		ctx.Logger().Errorf("failed to get wireguard peer: %s", err)
+		return ctx.JSON(http.StatusInternalServerError, models.Error{
+			Code:    "wireguard_error",
+			Message: err.Error(),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, normalUser)
 }
 
 func (c *WireGuardContainer) DeleteUser(ctx echo.Context) error {
