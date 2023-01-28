@@ -2,7 +2,7 @@ package models
 
 import "github.com/Delave-las-Kure/wgrest/db/model"
 
-// UserCreateOrUpdateRequest - Peer params that might be used due to creation or updation process
+// UserCreateOrUpdateRequest - User params that might be used due to creation or updation process
 type UserCreateOrUpdateRequest struct {
 
 	// User foreign id

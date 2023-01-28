@@ -525,6 +525,203 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /devices/{name}/peers/{urlSafePubKey}/disable/:
+    patch:
+      summary: Disable peer
+      operationId: DisableDevicePeer
+      tags:
+        - device
+      parameters:
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: urlSafePubKey
+          description: Peer's url safe public key
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Ok
+        404:
+          description: Peer or device not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /devices/{name}/peers/{urlSafePubKey}/enable/:
+    patch:
+      summary: Enableable peer
+      operationId: EnableDevicePeer
+      tags:
+        - device
+      parameters:
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: urlSafePubKey
+          description: Peer's url safe public key
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Ok
+        404:
+          description: Peer or device not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /users/:
+    get:
+      summary: Get users
+      operationId: FindUsers
+      tags:
+        - user
+      parameters:
+        - in: query
+          name: per_page
+          description: Number of WireGuard device's peers per page. Default is 100
+          schema:
+            type: number
+        - in: query
+          name: page
+          description: Page number. Default is 0
+          schema:
+            type: number
+        - in: query
+          name: q
+          description: Search query in name or in fid
+          schema:
+            type: string
+      responses:
+        200:
+          description: Ok
+          headers:
+            Link:
+              schema:
+                type: string
+                description: https://docs.github.com/en/rest/guides/traversing-with-pagination
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      summary: Create new user
+      operationId: CreateUser
+      tags:
+        - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateOrUpdateRequest"
+      responses:
+        200:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /users/{id}/:
+    get:
+      summary: Get user
+      operationId: FindUser
+      tags:
+        - user
+      parameters:
+        - in: path
+          name: id
+          description: User id
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        404:
+          description: not found
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: Update user
+      operationId: UpdateUser
+      tags:
+        - user
+      parameters:
+        - in: path
+          name: id
+          description: User id
+          required: true
+          schema:
+            type: number
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateOrUpdateRequest"
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        404:
+          description: User not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete user
+      operationId: DeleteUser
+      tags:
+        - user
+      parameters:
+        - in: path
+          name: id
+          description: User id
+          required: true
+          schema:
+            type: number
+      responses:
+        204:
+          description: Ok
+        404:
+          description: User not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -701,7 +898,13 @@ components:
     PeerCreateOrUpdateRequest:
       type: object
       description: Peer params that might be used due to creation or updation process
+      required:
+        - user_id
       properties:
+        user_id:
+          type: number
+          description: User Id
+          example: 1
         private_key:
           type: string
           description: Base64 encoded private key. If present it will be stored in persistent storage.
@@ -734,7 +937,7 @@ components:
           type: string
           description: Peer's endpoint in host:port format
           example: "1.2.3.4:2345"
-    Peer:
+    BasePeer:
       type: object
       description: Information about wireguard peer.
       required:
@@ -790,3 +993,50 @@ components:
           format: int64
           description: Peer's transmit bytes
           example: 432445
+    Peer:
+      type: object
+      allOf: 
+        - $ref: "#/components/schemas/BasePeer"
+        - type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/BaseUser"
+    BaseUser:
+      type: object
+      description: Information about wireguard user.
+      required:
+        - id
+      properties:
+        id:
+          type: number
+          example: 1
+        fid:
+          type: string
+          description: Foreighn id (for example th id)
+          example: tg_9AS98fN554
+        name:
+          type: string
+          description: Friendly name
+          example: Tom Winstown
+    User:
+      type: object
+      allOf: 
+        - $ref: "#/components/schemas/BaseUser"
+        - type: object
+          properties:
+            peers:
+              type: array
+              items:
+                $ref: "#/components/schemas/BasePeer"
+    UserCreateOrUpdateRequest:
+      type: object
+      description: User params that might be used due to creation or updation process
+      properties:
+        fid:
+          type: string
+          description: Foreighn id (for example th id)
+          example: tg_5645643342
+        name:
+          type: string
+          description: Friendly name
+          example: Tom Jason

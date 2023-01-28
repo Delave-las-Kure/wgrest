@@ -1,9 +1,6 @@
-openapi: 3.0.3
+openapi: "3.0.3"
 info:
-  contact:
-    email: support@forestvpn.com
-    name: ForestVPN
-    url: https://forestvpn.com/
+  title: WireGuard RESTful API
   description: |
     Manage WireGuard VPN tunnels by RESTful manner.
 
@@ -16,892 +13,1030 @@ info:
 
     ForestVPN client may be used as alternative client with enabled P2P technology over WireGuard tunnelling.
     Read more on https://forestvpn.com/
+  termsOfService: https://forestvpn.com/terms/
+  contact:
+    name: ForestVPN
+    url: https://forestvpn.com/
+    email: support@forestvpn.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-  termsOfService: https://forestvpn.com/terms/
-  title: WireGuard RESTful API
   version: "1.0"
+
 externalDocs:
   description: Documentation of wgrest
   url: https://forestvpn.com/docs/wgrest/
+
 servers:
-- url: '{scheme}://{host}/v1'
-  variables:
-    host:
-      default: example.com
-    scheme:
-      default: https
-      enum:
-      - https
-      - http
+  - url: '{scheme}://{host}/v1'
+    variables:
+      host:
+        default: "example.com"
+      scheme:
+        enum:
+          - 'https'
+          - 'http'
+        default: 'https'
+
 security:
-- bearerAuth: []
+  - bearerAuth: [ ]
+
 paths:
   /devices/:
     get:
+      summary: Devices list
       operationId: ListDevices
+      tags:
+        - device
       parameters:
-      - description: Number of WireGuard devices per page. Default is 100
-        explode: true
-        in: query
-        name: per_page
-        required: false
-        schema:
-          type: number
-        style: form
-      - description: Page number. Default is 0
-        explode: true
-        in: query
-        name: page
-        required: false
-        schema:
-          type: number
-        style: form
+        - in: query
+          name: per_page
+          description: Number of WireGuard devices per page. Default is 100
+          schema:
+            type: number
+        - in: query
+          name: page
+          description: Page number. Default is 0
+          schema:
+            type: number
       responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/Device'
-                type: array
+        '200':
           description: ok
           headers:
             Link:
-              explode: false
               schema:
-                description: https://docs.github.com/en/rest/guides/traversing-with-pagination
                 type: string
-              style: simple
-        default:
+                description: https://docs.github.com/en/rest/guides/traversing-with-pagination
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: array
+                items:
+                  $ref: "#/components/schemas/Device"
+        default:
           description: unexpected error
-      summary: Devices list
-      tags:
-      - device
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     post:
+      summary: Create new device
       operationId: CreateDevice
+      tags:
+        - device
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeviceCreateOrUpdateRequest'
+              $ref: "#/components/schemas/DeviceCreateOrUpdateRequest"
       responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Device'
+        201:
           description: Ok
-        "409":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Device"
+        409:
           description: Device exists
-        default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
+        default:
           description: unexpected error
-      summary: Create new device
-      tags:
-      - device
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /devices/{name}/:
-    delete:
-      operationId: DeleteDevice
-      parameters:
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
-      responses:
-        "204":
-          description: No content
-        "404":
-          description: Not found
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error
-      summary: Delete Device
-      tags:
-      - device
     get:
+      summary: Get device info
       operationId: GetDevice
+      tags:
+        - device
       parameters:
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
       responses:
-        "200":
+        '200':
+          description: ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Device'
-          description: ok
-        "404":
+                $ref: "#/components/schemas/Device"
+        404:
           description: not found
         default:
+          description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-          description: unexpected error
-      summary: Get device info
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete Device
+      operationId: DeleteDevice
       tags:
-      - device
-    patch:
-      operationId: UpdateDevice
+        - device
       parameters:
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: No content
+        404:
+          description: Not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: Update device
+      operationId: UpdateDevice
+      tags:
+        - device
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeviceCreateOrUpdateRequest'
-        required: true
+              $ref: "#/components/schemas/DeviceCreateOrUpdateRequest"
       responses:
-        "200":
+        200:
+          description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Device'
-          description: Ok
-        "404":
+                $ref: "#/components/schemas/Device"
+        404:
           description: Not found
         default:
+          description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-          description: unexpected error
-      summary: Update device
-      tags:
-      - device
+                $ref: "#/components/schemas/Error"
   /devices/{name}/options/:
     get:
+      summary: Get device options
       operationId: GetDeviceOptions
+      tags:
+        - device
       parameters:
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
       responses:
-        "200":
+        '200':
+          description: ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeviceOptions'
-          description: ok
-        "404":
+                $ref: "#/components/schemas/DeviceOptions"
+        404:
           description: not found
         default:
+          description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-          description: unexpected error
-      summary: Get device options
-      tags:
-      - device
+                $ref: "#/components/schemas/Error"
     patch:
+      summary: Update device's options
       operationId: UpdateDeviceOptions
+      tags:
+        - device
       parameters:
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeviceOptionsUpdateRequest'
-        required: true
+              $ref: "#/components/schemas/DeviceOptionsUpdateRequest"
       responses:
-        "200":
+        200:
+          description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeviceOptions'
-          description: Ok
-        "404":
+                $ref: "#/components/schemas/DeviceOptions"
+        404:
           description: Not found
         default:
+          description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-          description: unexpected error
-      summary: Update device's options
-      tags:
-      - device
+                $ref: "#/components/schemas/Error"
   /devices/{name}/peers/:
     get:
+      summary: Peers list
       operationId: ListDevicePeers
+      tags:
+        - device
       parameters:
-      - description: Device's name
-        explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
-      - description: Number of WireGuard device's peers per page. Default is 100
-        explode: true
-        in: query
-        name: per_page
-        required: false
-        schema:
-          type: number
-        style: form
-      - description: Page number. Default is 0
-        explode: true
-        in: query
-        name: page
-        required: false
-        schema:
-          type: number
-        style: form
-      - description: Search query
-        explode: true
-        in: query
-        name: q
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Sort field
-        explode: true
-        in: query
-        name: sort
-        required: false
-        schema:
-          enum:
-          - pub_key
-          - receive_bytes
-          - -receive_bytes
-          - transmit_bytes
-          - -transmit_bytes
-          - total_bytes
-          - -total_bytes
-          - last_handshake_time
-          - -last_handshake_time
-          type: string
-        style: form
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: per_page
+          description: Number of WireGuard device's peers per page. Default is 100
+          schema:
+            type: number
+        - in: query
+          name: page
+          description: Page number. Default is 0
+          schema:
+            type: number
+        - in: query
+          name: q
+          description: Search query
+          schema:
+            type: string
+        - in: query
+          name: sort
+          description: Sort field
+          schema:
+            type: string
+            enum:
+              - pub_key
+              - receive_bytes
+              - -receive_bytes
+              - transmit_bytes
+              - -transmit_bytes
+              - total_bytes
+              - -total_bytes
+              - last_handshake_time
+              - -last_handshake_time
       responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/Peer'
-                type: array
+        200:
           description: Ok
           headers:
             Link:
-              explode: false
               schema:
-                description: https://docs.github.com/en/rest/guides/traversing-with-pagination
                 type: string
-              style: simple
-        "404":
-          description: Device not found
-        default:
+                description: https://docs.github.com/en/rest/guides/traversing-with-pagination
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: array
+                items:
+                  $ref: "#/components/schemas/Peer"
+        404:
+          description: Device not found
+        default:
           description: Unexpected error
-      summary: Peers list
-      tags:
-      - device
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     post:
+      summary: Create new device peer
       operationId: CreateDevicePeer
+      tags:
+        - device
       parameters:
-      - description: Device's name
-        explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PeerCreateOrUpdateRequest'
+              $ref: "#/components/schemas/PeerCreateOrUpdateRequest"
       responses:
-        "201":
+        201:
+          description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Peer'
-          description: Created
-        "404":
+                $ref: "#/components/schemas/Peer"
+        404:
           description: Device not found
         default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error
-      summary: Create new device peer
-      tags:
-      - device
+                $ref: "#/components/schemas/Error"
   /devices/{name}/peers/{urlSafePubKey}/:
-    delete:
-      operationId: DeleteDevicePeer
-      parameters:
-      - description: Device's name
-        explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
-      - description: Peer's url safe public key
-        explode: false
-        in: path
-        name: urlSafePubKey
-        required: true
-        schema:
-          type: string
-        style: simple
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Peer'
-          description: Ok
-        "404":
-          description: Peer or device not found
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error
-      summary: Delete device's peer
-      tags:
-      - device
     get:
+      summary: Get device peer info
       operationId: GetDevicePeer
+      tags:
+        - device
       parameters:
-      - description: Device's name
-        explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
-      - description: Peer's url safe public key
-        explode: false
-        in: path
-        name: urlSafePubKey
-        required: true
-        schema:
-          type: string
-        style: simple
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: urlSafePubKey
+          description: Peer's url safe public key
+          required: true
+          schema:
+            type: string
       responses:
-        "200":
+        200:
+          description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Peer'
-          description: Ok
-        "404":
+                $ref: "#/components/schemas/Peer"
+        404:
           description: Peer or device not found
         default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error
-      summary: Get device peer info
-      tags:
-      - device
+                $ref: "#/components/schemas/Error"
     patch:
+      summary: Update device's peer
       operationId: UpdateDevicePeer
+      tags:
+        - device
       parameters:
-      - description: Device's name
-        explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
-      - description: Peer's url safe public key
-        explode: false
-        in: path
-        name: urlSafePubKey
-        required: true
-        schema:
-          type: string
-        style: simple
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: urlSafePubKey
+          description: Peer's url safe public key
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PeerCreateOrUpdateRequest'
+              $ref: "#/components/schemas/PeerCreateOrUpdateRequest"
       responses:
-        "200":
+        200:
+          description: Ok
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Peer'
-          description: Ok
-        "404":
+                $ref: "#/components/schemas/Peer"
+        404:
           description: Peer or device not found
         default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error
-      summary: Update device's peer
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete device's peer
+      operationId: DeleteDevicePeer
       tags:
-      - device
+        - device
+      parameters:
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: urlSafePubKey
+          description: Peer's url safe public key
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Peer"
+        404:
+          description: Peer or device not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /devices/{name}/peers/{urlSafePubKey}/quick.conf:
     get:
+      summary: Get device peer quick config
       operationId: GetDevicePeerQuickConfig
+      tags:
+        - device
       parameters:
-      - description: Device's name
-        explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
-      - description: Peer's url safe public key
-        explode: false
-        in: path
-        name: urlSafePubKey
-        required: true
-        schema:
-          type: string
-        style: simple
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: urlSafePubKey
+          description: Peer's url safe public key
+          required: true
+          schema:
+            type: string
       responses:
-        "200":
+        200:
+          description: Ok
           content:
             text/plain:
               schema:
-                format: binary
                 type: string
-          description: Ok
-        "404":
+                format: binary
+        404:
           description: Peer or device not found
         default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error
-      summary: Get device peer quick config
-      tags:
-      - device
+                $ref: "#/components/schemas/Error"
   /devices/{name}/peers/{urlSafePubKey}/quick.conf.png:
     get:
+      summary: Get device peer quick config QR code
       operationId: GetDevicePeerQuickConfigQRCodePNG
+      tags:
+        - device
       parameters:
-      - description: Device's name
-        explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          type: string
-        style: simple
-      - description: Peer's url safe public key
-        explode: false
-        in: path
-        name: urlSafePubKey
-        required: true
-        schema:
-          type: string
-        style: simple
-      - description: QR code's width & height. Default is 256px.
-        explode: true
-        in: query
-        name: width
-        required: false
-        schema:
-          type: string
-        style: form
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: urlSafePubKey
+          description: Peer's url safe public key
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: width
+          description: QR code's width & height. Default is 256px.
+          schema:
+            type: string
       responses:
-        "200":
+        200:
+          description: Ok
           content:
             image/jpeg:
               schema:
-                format: binary
                 type: string
-          description: Ok
-        "404":
+                format: binary
+        404:
           description: Peer or device not found
         default:
+          description: Unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error
-      summary: Get device peer quick config QR code
+                $ref: "#/components/schemas/Error"
+  /devices/{name}/peers/{urlSafePubKey}/disable/:
+    patch:
+      summary: Disable peer
+      operationId: DisableDevicePeer
       tags:
-      - device
+        - device
+      parameters:
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: urlSafePubKey
+          description: Peer's url safe public key
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Ok
+        404:
+          description: Peer or device not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /devices/{name}/peers/{urlSafePubKey}/enable/:
+    patch:
+      summary: Enableable peer
+      operationId: EnableDevicePeer
+      tags:
+        - device
+      parameters:
+        - in: path
+          name: name
+          description: Device's name
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: urlSafePubKey
+          description: Peer's url safe public key
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Ok
+        404:
+          description: Peer or device not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /users/:
+    get:
+      summary: Get users
+      operationId: FindUsers
+      tags:
+        - user
+      parameters:
+        - in: query
+          name: per_page
+          description: Number of WireGuard device's peers per page. Default is 100
+          schema:
+            type: number
+        - in: query
+          name: page
+          description: Page number. Default is 0
+          schema:
+            type: number
+        - in: query
+          name: q
+          description: Search query in name or in fid
+          schema:
+            type: string
+      responses:
+        200:
+          description: Ok
+          headers:
+            Link:
+              schema:
+                type: string
+                description: https://docs.github.com/en/rest/guides/traversing-with-pagination
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      summary: Create new user
+      operationId: CreateUser
+      tags:
+        - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateOrUpdateRequest"
+      responses:
+        200:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /users/{id}/:
+    get:
+      summary: Get user
+      operationId: FindUser
+      tags:
+        - user
+      parameters:
+        - in: path
+          name: id
+          description: User id
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        404:
+          description: not found
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: Update user
+      operationId: UpdateUser
+      tags:
+        - user
+      parameters:
+        - in: path
+          name: id
+          description: User id
+          required: true
+          schema:
+            type: number
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateOrUpdateRequest"
+      responses:
+        200:
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        404:
+          description: User not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete user
+      operationId: DeleteUser
+      tags:
+        - user
+      parameters:
+        - in: path
+          name: id
+          description: User id
+          required: true
+          schema:
+            type: number
+      responses:
+        204:
+          description: Ok
+        404:
+          description: User not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Authorization token
   schemas:
     Error:
+      type: object
+      required:
+        - code
+        - message
       properties:
         code:
+          type: string
           description: Error code
           example: device_does_not_exist
-          type: string
         message:
+          type: string
           description: Error's short description
           example: Device "wg0" does'n exist
-          type: string
         detail:
+          type: string
           description: Error's detail description
-          type: string
-      required:
-      - code
-      - message
-      type: object
     DeviceOptionsUpdateRequest:
+      type: object
       description: Device options
-      example:
-        allowed_ips:
-        - 0.0.0.0/0
-        - ::0/0
-        host: 1.2.3.4
-        dns_servers:
-        - 8.8.8.8
-        - 2001:4860:4860::8888
       properties:
         allowed_ips:
-          description: Device's allowed ips, it might be any of IPv4 or IPv6 addresses
-            in CIDR notation. It might be owervrite in peer and device config.
-          example:
-          - 0.0.0.0/0
-          - ::0/0
+          type: array
           items:
             type: string
+          description: Device's allowed ips, it might be any of IPv4 or IPv6 addresses in CIDR notation.
+            It might be owervrite in peer and device config.
+          example:
+            - 0.0.0.0/0
+            - ::0/0
           nullable: true
-          type: array
         dns_servers:
+          type: array
+          items:
+            type: string
           description: Interface's DNS servers.
           example:
-          - 8.8.8.8
-          - 2001:4860:4860::8888
-          items:
-            type: string
+            - 8.8.8.8
+            - 2001:4860:4860::8888
           nullable: true
-          type: array
         host:
+          type: string
           description: Device host, it might be domain name or IPv4/IPv6 address.
             It is used for external/internal connection
-          example: 1.2.3.4
+          example: "1.2.3.4"
           nullable: true
-          type: string
-      type: object
     DeviceOptions:
+      type: object
       description: Device options
-      example:
-        allowed_ips:
-        - 0.0.0.0/0
-        - ::0/0
-        host: 1.2.3.4
-        dns_servers:
-        - 8.8.8.8
-        - 2001:4860:4860::8888
+      required:
+        - allowed_ips
+        - dns_servers
+        - host
       properties:
         allowed_ips:
-          description: Device's allowed ips, it might be any of IPv4 or IPv6 addresses
-            in CIDR notation. It might be owervrite in peer and device config.
-          example:
-          - 0.0.0.0/0
-          - ::0/0
+          type: array
           items:
             type: string
-          type: array
+          description: Device's allowed ips, it might be any of IPv4 or IPv6 addresses in CIDR notation.
+            It might be owervrite in peer and device config.
+          example:
+            - 0.0.0.0/0
+            - ::0/0
         dns_servers:
+          type: array
+          items:
+            type: string
           description: Interface's DNS servers.
           example:
-          - 8.8.8.8
-          - 2001:4860:4860::8888
-          items:
-            type: string
-          type: array
+            - 8.8.8.8
+            - 2001:4860:4860::8888
         host:
+          type: string
           description: Device host, it might be domain name or IPv4/IPv6 address.
             It is used for external/internal connection
-          example: 1.2.3.4
-          type: string
-      required:
-      - allowed_ips
-      - dns_servers
-      - host
-      type: object
+          example: "1.2.3.4"
     DeviceCreateOrUpdateRequest:
+      type: object
       description: Device params that might be used due to creation or updation process
-      example:
-        firewall_mark: 10
-        listen_port: 51820
-        name: wg0
-        private_key: wBHGU3RiK/IFWXAF2jbHjGSDAKEO2ddcsZFEWcQ+qGc=
-        networks:
-        - 10.71.25.1/24
-        - fd42:21:21::1/64
       properties:
         name:
+          type: string
           description: WireGuard device name. Usually it is network interface name
           example: wg0
           nullable: true
-          type: string
         listen_port:
+          type: integer
+          format: int32
           description: WireGuard device listen port.
           example: 51820
-          format: int32
           nullable: true
-          type: integer
         private_key:
+          type: string
           description: WireGuard device private key encoded by base64.
           example: wBHGU3RiK/IFWXAF2jbHjGSDAKEO2ddcsZFEWcQ+qGc=
           nullable: true
-          type: string
         firewall_mark:
+          type: integer
+          format: int32
           description: WireGuard device firewall mark.
           example: 10
-          format: int32
           nullable: true
-          type: integer
         networks:
-          description: IPv4 or IPv6 addresses in CIDR notation
-          example:
-          - 10.71.25.1/24
-          - fd42:21:21::1/64
+          type: array
           items:
             type: string
+          description: IPv4 or IPv6 addresses in CIDR notation
+          example:
+            - 10.71.25.1/24
+            - fd42:21:21::1/64
           nullable: true
-          type: array
-      type: object
     Device:
+      type: object
       description: Information about wireguard device.
-      example:
-        public_key: QFjZjxa2sgwnmGT4NqyRoeNk31AlHjVxHNEH/qY/2no=
-        firewall_mark: 10
-        listen_port: 51820
-        total_receive_bytes: 59984733
-        name: wg0
-        networks:
-        - 10.71.25.1/24
-        - fd42:21:21::1/64
-        peers_count: 10
-        total_transmit_bytes: 45331987
+      required:
+        - name
+        - listen_port
+        - public_key
+        - private_key
+        - firewall_mark
+        - networks
+        - peers_count
+        - total_receive_bytes
+        - total_transmit_bytes
       properties:
         name:
+          type: string
           description: WireGuard device name. Usually it is network interface name
           example: wg0
-          type: string
         listen_port:
+          type: integer
+          format: int32
           description: WireGuard device listen port.
           example: 51820
-          format: int32
-          type: integer
         public_key:
+          type: string
           description: WireGuard device public key encoded by base64.
           example: QFjZjxa2sgwnmGT4NqyRoeNk31AlHjVxHNEH/qY/2no=
-          type: string
         firewall_mark:
+          type: integer
+          format: int32
           description: WireGuard device firewall mark.
           example: 10
-          format: int32
-          type: integer
         networks:
-          description: IPv4 or IPv6 addresses in CIDR notation
-          example:
-          - 10.71.25.1/24
-          - fd42:21:21::1/64
+          type: array
           items:
             type: string
-          type: array
+          description: IPv4 or IPv6 addresses in CIDR notation
+          example:
+            - 10.71.25.1/24
+            - fd42:21:21::1/64
         peers_count:
+          type: integer
+          format: int32
           description: WireGuard device's peers count
           example: 10
-          format: int32
-          type: integer
         total_receive_bytes:
+          type: integer
+          format: int64
           description: WireGuard device's peers total receive bytes
           example: 59984733
-          format: int64
-          type: integer
         total_transmit_bytes:
+          type: integer
+          format: int64
           description: WireGuard device's peers total transmit bytes
           example: 45331987
-          format: int64
-          type: integer
-      required:
-      - firewall_mark
-      - listen_port
-      - name
-      - networks
-      - peers_count
-      - private_key
-      - public_key
-      - total_receive_bytes
-      - total_transmit_bytes
-      type: object
     PeerCreateOrUpdateRequest:
+      type: object
       description: Peer params that might be used due to creation or updation process
-      example:
-        public_key: qnPJFozrAnrTjap5VjO30bUeLvhkZEEZx48w2RqMpRA=
-        endpoint: 1.2.3.4:2345
-        allowed_ips:
-        - 10.71.25.51/32
-        - fd42:21:21::51/128
-        persistent_keepalive_interval: 25s
-        private_key: gD89VQVXPAEpXuIyHOujw1wF4njIBtaSLvqAatBAuWY=
-        preshared_key: c2m+JtxpcRP6pztdDFRHnOx75SI+QyBDba1+BEbQaiA=
+      required:
+        - user_id
       properties:
+        user_id:
+          type: number
+          description: User Id
+          example: 1
         private_key:
-          description: Base64 encoded private key. If present it will be stored in
-            persistent storage.
+          type: string
+          description: Base64 encoded private key. If present it will be stored in persistent storage.
           example: gD89VQVXPAEpXuIyHOujw1wF4njIBtaSLvqAatBAuWY=
           nullable: true
-          type: string
         public_key:
+          type: string
           description: Base64 encoded public key
           example: qnPJFozrAnrTjap5VjO30bUeLvhkZEEZx48w2RqMpRA=
           nullable: true
-          type: string
         preshared_key:
+          type: string
           description: Base64 encoded preshared key
           example: c2m+JtxpcRP6pztdDFRHnOx75SI+QyBDba1+BEbQaiA=
           nullable: true
-          type: string
         allowed_ips:
-          description: Peer's allowed ips, it might be any of IPv4 or IPv6 addresses
-            in CIDR notation
-          example:
-          - 10.71.25.51/32
-          - fd42:21:21::51/128
+          type: array
           items:
             type: string
+          description: Peer's allowed ips, it might be any of IPv4 or IPv6 addresses in CIDR notation
+          example:
+            - 10.71.25.51/32
+            - fd42:21:21::51/128
           nullable: true
-          type: array
         persistent_keepalive_interval:
-          description: Peer's persistend keepalive interval. Valid time units are
-            "ns", "us" (or "µs"), "ms", "s", "m", "h".
-          example: 25s
           type: string
+          description: Peer's persistend keepalive interval. Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+          example: "25s"
         endpoint:
-          description: Peer's endpoint in host:port format
-          example: 1.2.3.4:2345
           type: string
+          description: Peer's endpoint in host:port format
+          example: "1.2.3.4:2345"
+    BasePeer:
       type: object
-    Peer:
       description: Information about wireguard peer.
-      example:
-        public_key: 0DGpyohLU+T1qAemWVWsNd1nwy3ZBAG7U4JJ/ZA+fWA=
-        endpoint: 1.2.3.4:2345
-        allowed_ips:
-        - 10.71.25.51/32
-        - fd42:21:21::51/128
-        last_handshake_time: 2000-01-23T04:56:07.000+00:00
-        url_safe_public_key: 0DGpyohLU-T1qAemWVWsNd1nwy3ZBAG7U4JJ_ZA-fWA
-        persistent_keepalive_interval: 25s
-        receive_bytes: 587732
-        transmit_bytes: 432445
-        preshared_key: c2m+JtxpcRP6pztdDFRHnOx75SI+QyBDba1+BEbQaiA=
+      required:
+        - public_key
+        - url_safe_public_key
+        - allowed_ips
+        - persistent_keepalive_interval
+        - last_handshake_time
+        - endpoint
+        - receive_bytes
+        - transmit_bytes
       properties:
         public_key:
+          type: string
           description: Base64 encoded public key
           example: 0DGpyohLU+T1qAemWVWsNd1nwy3ZBAG7U4JJ/ZA+fWA=
-          type: string
         url_safe_public_key:
-          description: URL safe base64 encoded public key. It is usefull to use in
-            peers api endpoint.
-          example: 0DGpyohLU-T1qAemWVWsNd1nwy3ZBAG7U4JJ_ZA-fWA
           type: string
+          description: URL safe base64 encoded public key. It is usefull to use in peers api endpoint.
+          example: 0DGpyohLU-T1qAemWVWsNd1nwy3ZBAG7U4JJ_ZA-fWA
         preshared_key:
+          type: string
           description: Base64 encoded preshared key
           example: c2m+JtxpcRP6pztdDFRHnOx75SI+QyBDba1+BEbQaiA=
-          type: string
         allowed_ips:
-          description: Peer's allowed ips, it might be any of IPv4 or IPv6 addresses
-            in CIDR notation
-          example:
-          - 10.71.25.51/32
-          - fd42:21:21::51/128
+          type: array
           items:
             type: string
-          type: array
+          description: Peer's allowed ips, it might be any of IPv4 or IPv6 addresses in CIDR notation
+          example:
+            - 10.71.25.51/32
+            - fd42:21:21::51/128
         last_handshake_time:
-          description: Peer's last handshake time formated in RFC3339
+          type: string
           format: date-time
-          type: string
+          description: Peer's last handshake time formated in RFC3339
+          example: ""
         persistent_keepalive_interval:
+          type: string
           description: Peer's persistend keepalive interval in
-          example: 25s
-          type: string
+          example: "25s"
         endpoint:
-          description: Peer's endpoint in host:port format
-          example: 1.2.3.4:2345
           type: string
+          description: Peer's endpoint in host:port format
+          example: "1.2.3.4:2345"
         receive_bytes:
+          type: integer
+          format: int64
           description: Peer's receive bytes
           example: 587732
-          format: int64
-          type: integer
         transmit_bytes:
+          type: integer
+          format: int64
           description: Peer's transmit bytes
           example: 432445
-          format: int64
-          type: integer
-      required:
-      - allowed_ips
-      - endpoint
-      - last_handshake_time
-      - persistent_keepalive_interval
-      - public_key
-      - receive_bytes
-      - transmit_bytes
-      - url_safe_public_key
+    Peer:
       type: object
-  securitySchemes:
-    bearerAuth:
-      description: Authorization token
-      scheme: bearer
-      type: http
+      allOf: 
+        - $ref: "#/components/schemas/BasePeer"
+        - type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/BaseUser"
+    BaseUser:
+      type: object
+      description: Information about wireguard user.
+      required:
+        - id
+      properties:
+        id:
+          type: number
+          example: 1
+        fid:
+          type: string
+          description: Foreighn id (for example th id)
+          example: tg_9AS98fN554
+        name:
+          type: string
+          description: Friendly name
+          example: Tom Winstown
+    User:
+      type: object
+      allOf: 
+        - $ref: "#/components/schemas/BaseUser"
+        - type: object
+          properties:
+            peers:
+              type: array
+              items:
+                $ref: "#/components/schemas/BasePeer"
+    UserCreateOrUpdateRequest:
+      type: object
+      description: User params that might be used due to creation or updation process
+      properties:
+        fid:
+          type: string
+          description: Foreighn id (for example th id)
+          example: tg_5645643342
+        name:
+          type: string
+          description: Friendly name
+          example: Tom Jason
