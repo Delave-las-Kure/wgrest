@@ -16,7 +16,7 @@ var (
 	EmptyKey = wgtypes.Key{}
 )
 
-func NewPeer(peer wgtypes.Peer, join bool) Peer {
+func NewPeer(peer wgtypes.Peer, device string, joinUser bool) Peer {
 
 	allowedIPs := make([]string, len(peer.AllowedIPs))
 	for i, v := range peer.AllowedIPs {
@@ -31,9 +31,10 @@ func NewPeer(peer wgtypes.Peer, join bool) Peer {
 		ReceiveBytes:                peer.ReceiveBytes,
 		TransmitBytes:               peer.TransmitBytes,
 		PersistentKeepaliveInterval: peer.PersistentKeepaliveInterval.String(),
+		Device:                      device,
 	}
 
-	if p.User == nil && join {
+	if p.User == nil && joinUser {
 		ctx := context.Background()
 		db, _ := connection.Open()
 		peerDb, err := service.FindPeer(service.FindPeerOpts{PublicKey: peer.PublicKey.String(), JoinUser: true}, ctx, db)

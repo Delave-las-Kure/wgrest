@@ -915,6 +915,10 @@ components:
           description: Base64 encoded public key
           example: qnPJFozrAnrTjap5VjO30bUeLvhkZEEZx48w2RqMpRA=
           nullable: true
+        device:
+          type: string
+          description: Internal network device name.
+          example: wg0
         preshared_key:
           type: string
           description: Base64 encoded preshared key
@@ -958,6 +962,10 @@ components:
           type: string
           description: URL safe base64 encoded public key. It is usefull to use in peers api endpoint.
           example: 0DGpyohLU-T1qAemWVWsNd1nwy3ZBAG7U4JJ_ZA-fWA
+        device:
+          type: string
+          description: Internal network device name.
+          example: wg0
         preshared_key:
           type: string
           description: Base64 encoded preshared key

@@ -16,6 +16,8 @@ type Peer struct {
 	// Base64 encoded preshared key
 	PresharedKey string `json:"preshared_key,omitempty"`
 
+	Device string `json:"device,omitempty"`
+
 	// Peer's allowed ips, it might be any of IPv4 or IPv6 addresses in CIDR notation
 	AllowedIps []string `json:"allowed_ips"`
 

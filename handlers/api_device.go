@@ -228,7 +228,7 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 		}
 	}
 
-	return ctx.JSON(http.StatusCreated, models.NewPeer(peer, true))
+	return ctx.JSON(http.StatusCreated, models.NewPeer(peer, device.Name, true))
 }
 
 // DeleteDevice - Delete Device
@@ -435,7 +435,7 @@ func (c *WireGuardContainer) GetDevicePeer(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusNotFound)
 	}
 
-	serPeer := models.NewPeer(*peer, true)
+	serPeer := models.NewPeer(*peer, device.Name, true)
 
 	return ctx.JSON(http.StatusOK, serPeer)
 }
@@ -502,7 +502,7 @@ func (c *WireGuardContainer) ListDevicePeers(ctx echo.Context) error {
 	paginatedPeers := filteredPeers[beginIndex:endIndex]
 	result := make([]models.Peer, len(paginatedPeers))
 	for i, v := range paginatedPeers {
-		result[i] = models.NewPeer(v, true)
+		result[i] = models.NewPeer(v, device.Name, true)
 	}
 
 	paginator.Write(ctx.Response())
@@ -783,7 +783,7 @@ func (c *WireGuardContainer) UpdateDevicePeer(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusNotFound)
 	}
 
-	return ctx.JSON(http.StatusOK, models.NewPeer(*peer, true))
+	return ctx.JSON(http.StatusOK, models.NewPeer(*peer, device.Name, true))
 }
 
 func (c *WireGuardContainer) getDevicePeerQuickConfig(ctx echo.Context) (io.Reader, error) {

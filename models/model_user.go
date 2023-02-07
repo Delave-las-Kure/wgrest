@@ -51,7 +51,7 @@ func NewUser(user *model.User, join bool) (*User, error) {
 				})
 
 				if ok {
-					peers = append(peers, NewPeer(peer, false))
+					peers = append(peers, NewPeer(peer, deviceName, false))
 				}
 
 			}
