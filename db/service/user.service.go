@@ -145,6 +145,8 @@ func GenFindUserOpts(ctx echo.Context) (*FindUserOpts, error) {
 		}
 
 		opts.PerPage = num
+	} else {
+		opts.PerPage = 100
 	}
 
 	return &opts, nil
