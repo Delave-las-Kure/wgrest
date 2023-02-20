@@ -12,9 +12,9 @@ import (
 type Peer struct {
 	gorm.Model
 
-	UserID uint `json:"user_id"`
+	//UserID uint `json:"user_id"`
 
-	User *User `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	//User *User `gorm:"foreignKey:UserID" json:"user,omitempty"`
 
 	// Base64 encoded public key
 	PublicKey string `gorm:"uniqueIndex" json:"public_key"`

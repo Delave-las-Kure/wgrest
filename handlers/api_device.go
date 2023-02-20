@@ -48,13 +48,13 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 		return err
 	}
 
-	if request.UserID == nil {
+	/*if request.UserID == nil {
 		ctx.Logger().Errorf("userId is required parameter")
 		return ctx.JSON(http.StatusInternalServerError, models.Error{
 			Code:    "wireguard_config_error",
 			Message: "userId is required parameter",
 		})
-	}
+	}*/
 
 	var privateKey *wgtypes.Key
 	peerConf := wgtypes.PeerConfig{}
@@ -164,10 +164,13 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 	db, _ := connection.Open()
 
 	dbPeer := model.Peer{
-		UserID:     *request.UserID,
 		PrivateKey: privateKey.String(),
 		Device:     name,
 	}
+
+	/*if request.UserID != nil {
+		dbPeer.UserID = *request.UserID
+	}*/
 
 	dbPeer.FromWgPeerConfig(&peerConf)
 
@@ -721,9 +724,9 @@ func (c *WireGuardContainer) UpdateDevicePeer(ctx echo.Context) error {
 	dbPeer := &model.Peer{}
 	fields := dbPeer.FromWgPeerConfig(&peerConf)
 
-	if request.UserID != nil {
+	/*if request.UserID != nil {
 		dbPeer.UserID = *request.UserID
-	}
+	}*/
 
 	dbPeer, err = service.UpdatePeer(service.FindPeerOpts{PublicKey: pubKey.String(), Select: fields}, dbPeer, ctxb, db)
 

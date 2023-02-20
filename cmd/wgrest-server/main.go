@@ -216,7 +216,7 @@ func main() {
 			// EnableDevicePeer - Enable peer
 			v1.PATCH("/devices/:name/peers/:urlSafePubKey/enable/", wc.EnableDevicePeer)
 
-			// CreateUser - Create user
+			/*// CreateUser - Create user
 			v1.POST("/users/", wc.CreateUser)
 
 			// FindUsers - Find users
@@ -225,11 +225,20 @@ func main() {
 			// FindUser - Get user
 			v1.GET("/users/:id/", wc.FindUser)
 
+			// FindUser - Get user by fid
+			v1.GET("/users/fid/:fid/", wc.FindUser)
+
 			// UpdateUser - Update user
 			v1.PATCH("/users/:id/", wc.UpdateUser)
 
-			// UpdateUser - Update user
+			// UpdateUser - Update user by fid
+			v1.PATCH("/users/fid/:fid/", wc.UpdateUser)
+
+			// DeleteUser - Update user
 			v1.DELETE("/users/:id/", wc.DeleteUser)
+
+			// DeleteUser - Update user by fid
+			v1.DELETE("/users/fid/:fid/", wc.DeleteUser)*/
 
 			listen := c.String("listen")
 			// Start server

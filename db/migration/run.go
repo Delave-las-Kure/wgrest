@@ -16,5 +16,5 @@ func Run(ctx context.Context) {
 		panic("failed to connect database")
 	}
 
-	client.WithContext(ctx).AutoMigrate(&model.User{}, &model.Peer{}, &model.AllowedIP{})
+	client.WithContext(ctx).AutoMigrate( /*&model.User{},*/ &model.Peer{}, &model.AllowedIP{})
 }
