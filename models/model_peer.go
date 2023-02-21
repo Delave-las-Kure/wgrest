@@ -36,5 +36,8 @@ type Peer struct {
 	// Peer's transmit bytes
 	TransmitBytes int64 `json:"transmit_bytes"`
 
-	User *User `json:"user,omitempty"`
+	// Enable peer connection
+	Disabled bool `json:"disabled"`
+
+	//User *User `json:"user,omitempty"`
 }

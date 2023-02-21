@@ -1,11 +1,14 @@
 package models
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net"
 	"time"
 
+	"github.com/Delave-las-Kure/wgrest/db/connection"
+	"github.com/Delave-las-Kure/wgrest/db/service"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
@@ -29,6 +32,13 @@ func NewPeer(peer wgtypes.Peer, device string, joinUser bool) Peer {
 		TransmitBytes:               peer.TransmitBytes,
 		PersistentKeepaliveInterval: peer.PersistentKeepaliveInterval.String(),
 		Device:                      device,
+	}
+
+	ctx := context.Background()
+	db, _ := connection.Open()
+	peerDb, err := service.FindPeer(service.FindPeerOpts{PublicKey: peer.PublicKey.String(), JoinUser: true}, ctx, db)
+	if err == nil {
+		p.Disabled = peerDb.Disabled
 	}
 
 	/*if p.User == nil && joinUser {
