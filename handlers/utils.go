@@ -64,7 +64,7 @@ func applyNetworks(device *models.Device) error {
 }
 
 func GetNextPeerIp(peers []wgtypes.Peer) (net.IPNet, error) {
-	peerIps := lo.Map(lo.Filter(peers, func(item wgtypes.Peer, i int) bool {
+	peerIps := lo.Flatten(lo.Map(lo.Filter(peers, func(item wgtypes.Peer, i int) bool {
 		if item.AllowedIPs == nil {
 			return false
 		}
@@ -74,13 +74,20 @@ func GetNextPeerIp(peers []wgtypes.Peer) (net.IPNet, error) {
 		})
 
 		return hasIp4
-	}), func(item wgtypes.Peer, i int) net.IPNet {
-		iIp, _ := lo.Find(item.AllowedIPs, func(ip net.IPNet) bool {
-			return ip.IP.To4() != nil
-		})
+	}), func(item wgtypes.Peer, i int) []net.IPNet {
+		ips := []net.IPNet{}
 
-		return iIp
-	})
+		for _, ip := range item.AllowedIPs {
+			if ip.IP.To4() != nil {
+				ips = append(ips, ip)
+			}
+		}
+		return ips
+	}))
+
+	if len(peerIps) == 0 {
+		return net.IPNet{}, errors.New("Can't find next ip")
+	}
 
 	sort.SliceStable(peerIps, func(i, j int) bool {
 		iIp := peerIps[i]
@@ -97,19 +104,7 @@ func GetNextPeerIp(peers []wgtypes.Peer) (net.IPNet, error) {
 		return false
 	})
 
-	latestIpStr := peerIps[0].IP.String()
-
-	addr, addrErr := netip.ParseAddr(latestIpStr)
-
-	if addrErr == nil && addr.Next().IsValid() {
-		nextAddr := addr.Next()
-		ipArr := nextAddr.As4()
-		ip := net.IPv4(ipArr[0], ipArr[1], ipArr[2], ipArr[3])
-
-		return net.IPNet{IP: ip, Mask: net.IPv4Mask(255, 255, 255, 255)}, nil
-	}
-
-	return net.IPNet{}, errors.New("Can't find next ip")
+	return getNextNetIp(peerIps[0].IP)
 }
 
 func getPubKey(ctx echo.Context) (*wgtypes.Key, error) {
@@ -128,4 +123,57 @@ func getPubKey(ctx echo.Context) (*wgtypes.Key, error) {
 	}
 
 	return &pubKey, nil
+}
+
+func getNextNetIpFromDevice(device string) (net.IPNet, error) {
+	ip, err := GetInternalIP(device)
+
+	if err != nil {
+		return net.IPNet{}, err
+	}
+
+	nextNetIp, err := getNextNetIp(ip)
+
+	if err != nil {
+		return net.IPNet{}, err
+	}
+
+	return nextNetIp, nil
+}
+
+func getNextNetIp(fromIp net.IP) (net.IPNet, error) {
+	latestIpStr := fromIp.String()
+
+	addr, addrErr := netip.ParseAddr(latestIpStr)
+
+	if addrErr == nil && addr.Next().IsValid() {
+		nextAddr := addr.Next()
+		ipArr := nextAddr.As4()
+		ip := net.IPv4(ipArr[0], ipArr[1], ipArr[2], ipArr[3])
+
+		return net.IPNet{IP: ip, Mask: net.IPv4Mask(255, 255, 255, 255)}, nil
+	}
+
+	return net.IPNet{}, errors.New("Can't find next ip")
+}
+
+func GetInternalIP(device string) (net.IP, error) {
+	itf, _ := net.InterfaceByName(device) //here your interface
+	item, _ := itf.Addrs()
+	var ip net.IP
+	for _, addr := range item {
+		switch v := addr.(type) {
+		case *net.IPNet:
+			if !v.IP.IsLoopback() {
+				if v.IP.To4() != nil { //Verify if IP is IPV4
+					ip = v.IP
+				}
+			}
+		}
+	}
+	if ip != nil {
+		return ip, nil
+	} else {
+		return net.IP{}, errors.New("Can't find device ip")
+	}
 }

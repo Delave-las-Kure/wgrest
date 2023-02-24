@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/samber/lo"
 	"github.com/vishvananda/netlink"
 
 	"github.com/Delave-las-Kure/wgrest/db/connection"
@@ -144,7 +145,11 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 
 	device, err := client.Device(name)
 
-	if request.AllowedIps == nil && device.Peers != nil {
+	if request.AllowedIps == nil &&
+		device.Peers != nil &&
+		lo.SomeBy(device.Peers, func(p wgtypes.Peer) bool {
+			return p.AllowedIPs != nil
+		}) {
 
 		addr, addrErr := GetNextPeerIp(device.Peers)
 
@@ -158,14 +163,29 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 
 		peerConf.AllowedIPs = []net.IPNet{addr}
 
+	} else if request.AllowedIps == nil {
+		nextNetIp, err := getNextNetIpFromDevice(name)
+
+		if err != nil {
+			ctx.Logger().Errorf("failed to generate next ip from device: %s", err)
+			return ctx.JSON(http.StatusBadRequest, models.Error{
+				Code:    "wireguard_config_error",
+				Message: err.Error(),
+			})
+		}
+
+		peerConf.AllowedIPs = []net.IPNet{nextNetIp}
 	}
 
 	//update db
 	db, _ := connection.Open()
 
 	dbPeer := model.Peer{
-		PrivateKey: privateKey.String(),
-		Device:     name,
+		Device: name,
+	}
+
+	if privateKey != nil {
+		dbPeer.PrivateKey = privateKey.String()
 	}
 
 	/*if request.UserID != nil {
@@ -721,7 +741,14 @@ func (c *WireGuardContainer) UpdateDevicePeer(ctx echo.Context) error {
 		})
 	}
 
-	dbPeer := &model.Peer{}
+	dbPeer := &model.Peer{
+		Device: name,
+	}
+
+	if request.PrivateKey != nil {
+		dbPeer.PrivateKey = *request.PrivateKey
+	}
+
 	fields := dbPeer.FromWgPeerConfig(&peerConf)
 
 	/*if request.UserID != nil {

@@ -169,34 +169,34 @@ func main() {
 			}
 
 			// CreateDevice - Create new device
-			v1.POST("/devices/", wc.CreateDevice)
+			v1.POST("/devices", wc.CreateDevice)
 
 			// CreateDevicePeer - Create new device peer
-			v1.POST("/devices/:name/peers/", wc.CreateDevicePeer)
+			v1.POST("/devices/:name/peers", wc.CreateDevicePeer)
 
 			// DeleteDevice - Delete Device
-			v1.DELETE("/devices/:name/", wc.DeleteDevice)
+			v1.DELETE("/devices/:name", wc.DeleteDevice)
 
 			// DeleteDevicePeer - Delete device's peer
-			v1.DELETE("/devices/:name/peers/:urlSafePubKey/", wc.DeleteDevicePeer)
+			v1.DELETE("/devices/:name/peers/:urlSafePubKey", wc.DeleteDevicePeer)
 
 			// GetDevice - Get device info
-			v1.GET("/devices/:name/", wc.GetDevice)
+			v1.GET("/devices/:name", wc.GetDevice)
 
 			// GetDevicePeer - Get device peer info
-			v1.GET("/devices/:name/peers/:urlSafePubKey/", wc.GetDevicePeer)
+			v1.GET("/devices/:name/peers/:urlSafePubKey", wc.GetDevicePeer)
 
 			// ListDevicePeers - Peers list
-			v1.GET("/devices/:name/peers/", wc.ListDevicePeers)
+			v1.GET("/devices/:name/peers", wc.ListDevicePeers)
 
 			// ListDevices - Devices list
-			v1.GET("/devices/", wc.ListDevices)
+			v1.GET("/devices", wc.ListDevices)
 
 			// UpdateDevice - Update device
-			v1.PATCH("/devices/:name/", wc.UpdateDevice)
+			v1.PATCH("/devices/:name", wc.UpdateDevice)
 
 			// UpdateDevicePeer - Update device's peer
-			v1.PATCH("/devices/:name/peers/:urlSafePubKey/", wc.UpdateDevicePeer)
+			v1.PATCH("/devices/:name/peers/:urlSafePubKey", wc.UpdateDevicePeer)
 
 			// GetDevicePeerQuickConfig - Get device peer quick config
 			v1.GET("/devices/:name/peers/:urlSafePubKey/quick.conf", wc.GetDevicePeerQuickConfig)
@@ -205,16 +205,16 @@ func main() {
 			v1.GET("/devices/:name/peers/:urlSafePubKey/quick.conf.png", wc.GetDevicePeerQuickConfigQRCodePNG)
 
 			// GetDeviceOptions - Get device options
-			v1.GET("/devices/:name/options/", wc.GetDeviceOptions)
+			v1.GET("/devices/:name/options", wc.GetDeviceOptions)
 
 			// UpdateDeviceOptions - Update device's options
-			v1.PATCH("/devices/:name/options/", wc.UpdateDeviceOptions)
+			v1.PATCH("/devices/:name/options", wc.UpdateDeviceOptions)
 
 			// DisableDevicePeer - Disable peer
-			v1.PATCH("/devices/:name/peers/:urlSafePubKey/disable/", wc.DisableDevicePeer)
+			v1.PATCH("/devices/:name/peers/:urlSafePubKey/disable", wc.DisableDevicePeer)
 
 			// EnableDevicePeer - Enable peer
-			v1.PATCH("/devices/:name/peers/:urlSafePubKey/enable/", wc.EnableDevicePeer)
+			v1.PATCH("/devices/:name/peers/:urlSafePubKey/enable", wc.EnableDevicePeer)
 
 			/*// CreateUser - Create user
 			v1.POST("/users/", wc.CreateUser)

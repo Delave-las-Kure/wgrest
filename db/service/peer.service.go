@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Delave-las-Kure/wgrest/db/model"
+	"github.com/Delave-las-Kure/wgrest/db/scope/paginatesc"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -13,11 +14,13 @@ type FindPeerOpts struct {
 
 	PublicKey string
 
-	JoinUser bool
+	//JoinUser bool
 
 	JoinAllowedIps bool
 
 	Select []string
+
+	paginatesc.PaginateModel
 }
 
 func UpsertPeer(peer *model.Peer, ctx context.Context, client *gorm.DB) (*model.Peer, error) {
@@ -54,7 +57,7 @@ func UpdatePeer(opts FindPeerOpts, peer *model.Peer, ctx context.Context, client
 
 	fnOpts := FindPeerOpts(opts)
 	fnOpts.JoinAllowedIps = true
-	fnOpts.JoinUser = true
+	//fnOpts.JoinUser = true
 	fnOpts.Select = nil
 
 	return FindPeer(fnOpts, ctx, client)
@@ -70,6 +73,24 @@ func FindPeer(opts FindPeerOpts, ctx context.Context, client *gorm.DB) (*model.P
 	result := req.First(&peer)
 
 	return &peer, result.Error
+}
+
+func FindPeers(opts FindPeerOpts, ctx context.Context, client *gorm.DB) (*[]model.Peer, int64, error) {
+	db := client.WithContext(ctx).Model(&model.Peer{})
+
+	req := findPeerBuilder(opts, db)
+
+	peers := []model.Peer{}
+
+	var count int64
+
+	result := req.Scopes(
+		paginatesc.Paginate(&paginatesc.PaginateModel{Page: opts.Page, PerPage: opts.PerPage}),
+	).Find(&peers)
+
+	req.Count(&count)
+
+	return &peers, count, result.Error
 }
 
 func DeletePeer(opts FindPeerOpts, ctx context.Context, client *gorm.DB) error {
@@ -98,9 +119,9 @@ func findPeerBuilder(opts FindPeerOpts, req *gorm.DB) *gorm.DB {
 		req = req.Preload("AllowedIps")
 	}
 
-	if opts.JoinUser {
+	/*if opts.JoinUser {
 		req = req.Preload("User")
-	}
+	}*/
 
 	if opts.Select != nil {
 		req = req.Select(opts.Select)

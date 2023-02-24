@@ -36,9 +36,10 @@ func NewPeer(peer wgtypes.Peer, device string, joinUser bool) Peer {
 
 	ctx := context.Background()
 	db, _ := connection.Open()
-	peerDb, err := service.FindPeer(service.FindPeerOpts{PublicKey: peer.PublicKey.String(), JoinUser: true}, ctx, db)
+	peerDb, err := service.FindPeer(service.FindPeerOpts{PublicKey: peer.PublicKey.String() /*, JoinUser: true*/}, ctx, db)
 	if err == nil {
 		p.Disabled = peerDb.Disabled
+		//p.PrivateKey = peerDb.PrivateKey
 	}
 
 	/*if p.User == nil && joinUser {
