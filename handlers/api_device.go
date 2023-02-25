@@ -96,20 +96,6 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 		privateKey = &privKey
 	}
 
-	if privateKey != nil {
-		err := c.storage.WritePeerOptions(peerConf.PublicKey, storage.StorePeerOptions{
-			PrivateKey: privateKey.String(),
-		})
-
-		if err != nil {
-			ctx.Logger().Errorf("failed to save peer options: %s", err)
-			return ctx.JSON(http.StatusInternalServerError, models.Error{
-				Code:    "wireguard_config_error",
-				Message: err.Error(),
-			})
-		}
-	}
-
 	name := ctx.Param("name")
 
 	client, err := wgctrl.New()
@@ -177,6 +163,33 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 		peerConf.AllowedIPs = []net.IPNet{nextNetIp}
 	}
 
+	if privateKey != nil {
+		err := c.storage.WritePeerOptions(peerConf.PublicKey, storage.StorePeerOptions{
+			PrivateKey: privateKey.String(),
+		})
+
+		if err != nil {
+			ctx.Logger().Errorf("failed to save peer options: %s", err)
+			return ctx.JSON(http.StatusInternalServerError, models.Error{
+				Code:    "wireguard_config_error",
+				Message: err.Error(),
+			})
+		}
+	} else if request.PrivateKey != nil {
+		// store private key
+		err := c.storage.WritePeerOptions(peerConf.PublicKey, storage.StorePeerOptions{
+			PrivateKey: *request.PrivateKey,
+		})
+
+		if err != nil {
+			ctx.Logger().Errorf("failed to save peer's options: %s", err)
+			return ctx.JSON(http.StatusInternalServerError, models.Error{
+				Code:    "wireguard_peer_error",
+				Message: err.Error(),
+			})
+		}
+	}
+
 	//update db
 	db, _ := connection.Open()
 
@@ -186,6 +199,8 @@ func (c *WireGuardContainer) CreateDevicePeer(ctx echo.Context) error {
 
 	if privateKey != nil {
 		dbPeer.PrivateKey = privateKey.String()
+	} else if request.PrivateKey != nil {
+		dbPeer.PrivateKey = *request.PrivateKey
 	}
 
 	/*if request.UserID != nil {

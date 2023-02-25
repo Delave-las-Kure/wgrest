@@ -19,7 +19,7 @@ type Peer struct {
 	// Base64 encoded public key
 	PublicKey string `gorm:"uniqueIndex" json:"public_key"`
 
-	PrivateKey string `json:"-"`
+	PrivateKey string `json:"private_key"`
 
 	Device string `json:"device"`
 

@@ -10,8 +10,8 @@ type Peer struct {
 	// Base64 encoded public key
 	PublicKey string `json:"public_key"`
 
-	// Base64 encoded public key
-	//PrivateKey string `json:"private_key"`
+	// Base64 encoded private key
+	PrivateKey string `json:"private_key"`
 
 	// URL safe base64 encoded public key. It is usefull to use in peers api endpoint.
 	UrlSafePublicKey string `json:"url_safe_public_key"`
