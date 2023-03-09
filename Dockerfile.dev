@@ -22,9 +22,9 @@ WORKDIR /home/wgrest
 
 COPY ./run-dev.sh ./run-dev.sh
 
-COPY ./postup.sh ./postup.sh
-COPY ./postdown.sh ./postdown.sh
+#COPY ./postup.sh ./postup.sh
+#COPY ./postdown.sh ./postdown.sh
 
-RUN chmod +x ./run-dev.sh ./postdown.sh ./postup.sh
+RUN chmod +x ./run-dev.sh
 
 ENTRYPOINT exec ./run-dev.sh
