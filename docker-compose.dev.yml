@@ -13,6 +13,7 @@ services:
       PUID: 1000
       PGID: 1000
       TZ: RU
+      SERVERURL: localhost
       PEERS: 1 #optional
       SERVERPORT: 51820 #optional
       PEERDNS: auto #optional
@@ -26,3 +27,9 @@ services:
       - 51820:51820/udp
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
+    secrets:
+      - api-key
+
+secrets:
+  api-key:
+    file: ./secrets/api-key

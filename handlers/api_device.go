@@ -857,6 +857,10 @@ func (c *WireGuardContainer) getDevicePeerQuickConfig(ctx echo.Context) (io.Read
 		deviceOptions = &c.defaultDeviceOptions
 	}
 
+	if os.Getenv("SERVERURL") != "" {
+		deviceOptions.Host = os.Getenv("SERVERURL")
+	}
+
 	client, err := wgctrl.New()
 	if err != nil {
 		return nil, err
