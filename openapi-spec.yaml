@@ -557,7 +557,7 @@ paths:
                 $ref: "#/components/schemas/Error"
   /devices/{name}/peers/{urlSafePubKey}/enable/:
     patch:
-      summary: Enableable peer
+      summary: Enable peer
       operationId: EnableDevicePeer
       tags:
         - device
