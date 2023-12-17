@@ -24,6 +24,10 @@ type FindPeerOpts struct {
 }
 
 func UpsertPeer(peer *model.Peer, ctx context.Context, client *gorm.DB) (*model.Peer, error) {
+	client.WithContext(ctx)
+
+	DeleteAllowedIps(&peer.AllowedIps, ctx, client)
+
 	result := client.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "public_key"}},
 		UpdateAll: true,

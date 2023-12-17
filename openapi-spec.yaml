@@ -42,7 +42,7 @@ security:
   - bearerAuth: [ ]
 
 paths:
-  /devices/:
+  /devices:
     get:
       summary: Devices list
       operationId: ListDevices
@@ -108,7 +108,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /devices/{name}/:
+  /devices/{name}:
     get:
       summary: Get device info
       operationId: GetDevice
@@ -189,7 +189,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /devices/{name}/options/:
+  /devices/{name}/options:
     get:
       summary: Get device options
       operationId: GetDeviceOptions
@@ -248,7 +248,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /devices/{name}/peers/:
+  /devices/{name}/peers:
     get:
       summary: Peers list
       operationId: ListDevicePeers
@@ -345,7 +345,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /devices/{name}/peers/{urlSafePubKey}/:
+  /devices/{name}/peers/{urlSafePubKey}:
     get:
       summary: Get device peer info
       operationId: GetDevicePeer
@@ -525,7 +525,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /devices/{name}/peers/{urlSafePubKey}/disable/:
+  /devices/{name}/peers/{urlSafePubKey}/disable:
     patch:
       summary: Disable peer
       operationId: DisableDevicePeer
@@ -555,7 +555,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /devices/{name}/peers/{urlSafePubKey}/enable/:
+  /devices/{name}/peers/{urlSafePubKey}/enable:
     patch:
       summary: Enable peer
       operationId: EnableDevicePeer
@@ -585,7 +585,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /users/:
+  /users:
     get:
       summary: Get users
       operationId: FindUsers
@@ -638,9 +638,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-  /users/{id}/:
+  /users/{id}:
     $ref: '#/paths/schemas/UsersPaths'
-  /users/fid/{id}/:
+  /users/fid/{id}:
     $ref: '#/paths/schemas/UsersPaths'
   schemas:
     UsersPaths:
